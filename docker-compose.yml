@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: shipsec_user
+      POSTGRES_PASSWORD: shipsec_passwd
+      POSTGRES_DB: shipsec
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DB_USER: shipsec_user
+      PASSWD: shipsec_passwd
+      DB_NAME: shipsec
+      HOST: db
+      PORT: 5432
+      SHIPSEC_API_KEY: dummy
+      SHIPSEC_BASE_URL: dummy
+      VJD_BASE_URL: dummy
+      WEBHOOK_SECRET: dummy
+      SHOPIFY_API_VERSION: dummy
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  pgdata: 
