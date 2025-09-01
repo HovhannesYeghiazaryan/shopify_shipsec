@@ -46,16 +46,6 @@ DEVELOPMENT_MODE = True
 # In-memory set to track processed webhook IDs and prevent duplicate processing
 processed_webhook_ids = set()
 
-# Enhanced CORS settings for remote access
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # For ngrok testing - restrict in production
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["*"]
-)
-
 # Register all routers explicitly
 app.include_router(customers_router)
 app.include_router(shipsec_router)

@@ -333,9 +333,12 @@ async def place_fulfillment_hold(fulfillment_order_id: str) -> bool:
             'Content-Type': 'application/json'
         }
 
+        # Create SSL context for certificate verification
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+
         # Send the GraphQL request to Shopify asynchronously
         async with aiohttp.ClientSession() as client:
-            async with client.post(url, json={'query': query, 'variables': variables}, headers=headers) as response:
+            async with client.post(url, json={'query': query, 'variables': variables}, headers=headers, ssl=ssl_context) as response:
                 if response.status == 200:
                     data = await response.json()
                     if 'errors' in data:
@@ -523,7 +526,7 @@ async def get_order_metafields_from_shipsec(shipsec_order_id):
             "Content-Type": "application/json",
             "Accept": "application/json"
         }
-        ssl_context = ssl.create_default_context()
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url, ssl=ssl_context) as response:
                 if response.status == 200:
@@ -589,7 +592,7 @@ async def get_fulfillment_order_id_from_vjd(vjd_order_id):
         url = f"{VJD_BASE_URL}/admin/api/{SHOPIFY_API_VERSION}/orders/{vjd_order_id}/fulfillment_orders.json"
         logging.warning(f"Shopify fulfillment_orders URL for VJD order {vjd_order_id}: {url}")
         headers = {"X-Shopify-Access-Token": VJD_API_KEY}
-        ssl_context = ssl.create_default_context()
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url, ssl=ssl_context) as response:
                 if response.status == 200:
@@ -628,7 +631,7 @@ async def release_hold_on_vjd_order(fulfillment_order_id):
         """
         variables = {"id": f"gid://shopify/FulfillmentOrder/{fulfillment_order_id}"}
         headers = {"X-Shopify-Access-Token": VJD_API_KEY, "Content-Type": "application/json"}
-        ssl_context = ssl.create_default_context()
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
         logging.info(f"Releasing hold: url={url}, fulfillment_order_id={fulfillment_order_id}, headers={headers}")
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json={"query": query, "variables": variables}, headers=headers, ssl=ssl_context) as response:
@@ -646,3 +649,4 @@ async def release_hold_on_vjd_order(fulfillment_order_id):
     except Exception as e:
         logging.error(f"Error releasing hold on fulfillment order {fulfillment_order_id}: {str(e)}")
         return False
+
