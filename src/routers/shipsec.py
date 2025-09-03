@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from src.utils import verify_shopify_webhook, generate_code, add_metafields_to_customer_notify_response, notify_shopify_app, get_order_metafields_from_shipsec, parse_draft_order_id_from_metafields, get_vjd_order_id_from_shipsec_order, get_fulfillment_order_id_from_vjd, release_hold_on_vjd_order
 from get_env_values import WEBHOOK_SECRET
+import os
 from src.database.database import DatabaseManager
 import logging
 
@@ -78,12 +79,17 @@ async def customers_enable(request: Request, x_shopify_hmac_sha256: str = Header
         except Exception as e:
             logging.error(f"Failed to notify Shopify app: {e}")
         try:
-            notify_app_response = await notify_shopify_app(
-                customer_name,
-                simple_code,
-                signature_code
-            )
-            logging.info(f"Notified backend app: {notify_app_response}")
+            notify_url = os.getenv("SHOPIFY_APP_URL") or os.getenv("BACKEND_NOTIFY_URL")
+            if notify_url:
+                notify_app_response = await notify_shopify_app(
+                    notify_url,
+                    customer_name,
+                    simple_code,
+                    signature_code
+                )
+                logging.info(f"Notified backend app: {notify_app_response}")
+            else:
+                logging.warning("SHOPIFY_APP_URL/BACKEND_NOTIFY_URL not set; skipping backend notification")
         except Exception as e:
             logging.error(f"Failed to notify backend app: {e}")
         return JSONResponse(
